@@ -166,7 +166,7 @@ public class ModuleManager implements IManager {
     public static AntiCrash antiCrash = new AntiCrash();
     public static AutoGear autoGear = new AutoGear();
     public static ViewLock viewLock = new ViewLock();
-    public static JumpVelocity velocity = new JumpVelocity();
+    public static Velocity velocity = new Velocity();
     public static Tooltips tooltips = new Tooltips();
     public static Surround surround = new Surround();
     public static Scaffold scaffold = new Scaffold();

@@ -9,7 +9,6 @@ import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import org.jetbrains.annotations.NotNull;
 import thunder.hack.core.manager.client.ModuleManager;
 import thunder.hack.events.impl.PacketEvent;
 import thunder.hack.features.modules.Module;
@@ -19,12 +18,8 @@ import thunder.hack.injection.accesors.ISPacketEntityVelocity;
 import thunder.hack.setting.Setting;
 import thunder.hack.utility.player.MovementUtility;
 
-/**
- * @author yuxiangll
- * @since 2024/8/16 下午3:21
- * IntelliJ IDEA
- */
-public class JumpVelocity extends Module {
+
+public class Velocity extends Module {
     /*
     TY <3
     https://github.com/SkidderMC/FDPClient/blob/main/src/main/java/net/ccbluex/liquidbounce/features/module/modules/combat/velocitys/vanilla/JumpVelocity.kt
@@ -47,8 +42,8 @@ public class JumpVelocity extends Module {
     private boolean doJump, failJump, skip, flag;
     private int grimTicks, ccCooldown;
 
-    public JumpVelocity() {
-        super("JumpVelocity",Category.MOVEMENT);
+    public Velocity() {
+        super("Velocity",Category.MOVEMENT);
     }
 
 
