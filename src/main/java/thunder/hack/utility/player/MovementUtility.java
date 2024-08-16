@@ -2,6 +2,7 @@ package thunder.hack.utility.player;
 
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import thunder.hack.ThunderHack;
 import thunder.hack.core.Managers;
 import thunder.hack.events.impl.EventMove;
@@ -68,6 +69,18 @@ public final class MovementUtility {
             mc.player.setVelocity(forward * speed * cos + strafe * speed * sin, mc.player.getVelocity().y, forward * speed * sin - strafe * speed * cos);
         }
     }
+
+
+    /**
+     * Makes the player strafe at the specified speed
+     */
+    public static void strafe(final double speed) {
+        final double yaw = getMoveDirection();
+        Vec3d playerVelocity = mc.player.getVelocity();
+        mc.player.setVelocity(-MathHelper.sin((float) yaw) * speed,playerVelocity.y,MathHelper.cos((float) yaw) * speed);
+    }
+
+
 
     public static float getMoveDirection() {
         double forward = mc.player.input.movementForward;
