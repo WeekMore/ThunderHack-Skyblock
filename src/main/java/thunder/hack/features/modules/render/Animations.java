@@ -6,10 +6,9 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.CrossbowItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
@@ -25,6 +24,8 @@ import thunder.hack.features.modules.Module;
 import thunder.hack.features.modules.combat.Aura;
 import thunder.hack.setting.Setting;
 
+import java.util.Objects;
+
 public class Animations extends Module {
     public Animations() {
         super("Animations", Category.RENDER);
@@ -36,6 +37,11 @@ public class Animations extends Module {
     private final Setting<Mode> mode = new Setting<Mode>("Mode", Mode.Default);
     public static Setting<Boolean> slowAnimation = new Setting<>("SlowAnimation", true);
     public static Setting<Integer> slowAnimationVal = new Setting<>("SlowValue", 12, 1, 50);
+
+    public static Setting<Boolean> block = new Setting<>("Block", true);
+    public static Setting<Boolean> hideShield = new Setting<>("HideShield", true, v-> block.getValue());
+    public static Setting<Boolean> alwaysHideShield = new Setting<>("AlwaysHideShield", true , v-> block.getValue() && hideShield.getValue());
+    public static Setting<Boolean> hideOffhandSlot = new Setting<>("hideOffhandSlot", true, v-> block.getValue());
 
     public boolean flip;
 
@@ -82,8 +88,6 @@ public class Animations extends Module {
             matrices.translate(ModuleManager.viewModel.positionMainX.getValue(), -ModuleManager.viewModel.positionMainY.getValue(), -ModuleManager.viewModel.positionMainZ.getValue());
             return;
         }
-
-
         switch (mode.getValue()) {
             case Default -> {
                 applyEquipOffset(matrices, arm, equipProgress);
@@ -389,6 +393,13 @@ public class Animations extends Module {
         if (stack.isEmpty()) {
             return;
         }
+        if (ModuleManager.animations.isEnabled()){
+            if (Animations.block.getValue()){
+                if ((Animations.alwaysHideShield.getValue() && Animations.hideShield.getValue() && stack.getItem() instanceof ShieldItem) || (Animations.hideShield.getValue() && stack.getItem() instanceof ShieldItem && Animations.canWeaponBlock(entity)))
+                    return;
+            }
+        }
+
         mc.getItemRenderer().renderItem(entity, stack, renderMode, leftHanded, matrices, vertexConsumers, entity.getWorld(), light, OverlayTexture.DEFAULT_UV, entity.getId() + renderMode.ordinal());
     }
 
@@ -428,4 +439,25 @@ public class Animations extends Module {
         if (ModuleManager.viewModel.isEnabled())
             matrices.translate(ModuleManager.viewModel.positionMainX.getValue(), -ModuleManager.viewModel.positionMainY.getValue(), -ModuleManager.viewModel.positionMainZ.getValue());
     }
+
+
+
+    public static boolean isWeaponBlocking(LivingEntity entity) {
+        return entity.isUsingItem() && (canWeaponBlock(entity) || isBlockingOnViaVersion(entity));
+    }
+
+    public static boolean canWeaponBlock(LivingEntity entity) {
+        if (block.getValue() && (entity.getOffHandStack().getItem() instanceof ShieldItem || entity.getMainHandStack().getItem() instanceof ShieldItem)) {
+            Item weaponItem = entity.getOffHandStack().getItem() instanceof ShieldItem ? entity.getMainHandStack().getItem() : entity.getOffHandStack().getItem();
+            return weaponItem instanceof SwordItem || weaponItem instanceof AxeItem || weaponItem instanceof MaceItem;
+        }
+        return false;
+    }
+    public static boolean isBlockingOnViaVersion(LivingEntity entity) {
+        Item item = entity.getMainHandStack().getItem() instanceof SwordItem ? entity.getMainHandStack().getItem() : entity.getOffHandStack().getItem();
+        return item instanceof SwordItem && item.getComponents() != null && item.getComponents().contains(DataComponentTypes.FOOD) && Objects.requireNonNull(item.getComponents().get(DataComponentTypes.FOOD)).eatSeconds() == 3600;
+    }
+
+
+
 }

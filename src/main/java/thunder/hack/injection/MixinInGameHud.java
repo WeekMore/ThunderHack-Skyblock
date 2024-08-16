@@ -1,12 +1,16 @@
 package thunder.hack.injection;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ShieldItem;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import thunder.hack.core.Managers;
 import thunder.hack.core.manager.client.ModuleManager;
 import thunder.hack.features.hud.impl.Hotbar;
+import thunder.hack.features.modules.render.Animations;
 import thunder.hack.gui.windows.WindowsScreen;
 import thunder.hack.features.modules.Module;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -87,4 +91,10 @@ public abstract class MixinInGameHud {
         if (ModuleManager.crosshair.isEnabled())
             ci.cancel();
     }
+
+    @ModifyExpressionValue(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;getOffHandStack()Lnet/minecraft/item/ItemStack;"), method = "renderHotbar")
+    public ItemStack swordblocking$hideOffHandSlot(ItemStack original) {
+        return (Animations.block.getValue() && Animations.hideOffhandSlot.getValue() && original.getItem() instanceof ShieldItem) ? ItemStack.EMPTY : original;
+    }
+
 }

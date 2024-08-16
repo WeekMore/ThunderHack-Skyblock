@@ -7,7 +7,7 @@ public class UnfocusedCPU extends Module {
     public UnfocusedCPU() {
         super("UnfocusedCPU", Module.Category.MISC);
     }
-    private final Setting<Integer> fps = new Setting("Fps", 15, 0, 100);
+    private final Setting<Integer> fps = new Setting("Fps", 15, 1, 100);
     private int maxFps;
 
     @Override

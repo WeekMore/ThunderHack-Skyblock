@@ -44,7 +44,7 @@ public class MixinPlayerEntity {
 
     @Inject(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;setSprinting(Z)V", shift = At.Shift.AFTER))
     public void attackAHook(CallbackInfo callbackInfo) {
-        if (ModuleManager.autoSprint.isEnabled() && AutoSprint.sprint.getValue()) {
+        if (ModuleManager.autoSprint.isEnabled() && AutoSprint.sprint.getValue() && AutoSprint.mode.is(AutoSprint.Mode.AllDirection)) {
             final float multiplier = 0.6f + 0.4f * AutoSprint.motion.getValue();
             mc.player.setVelocity(mc.player.getVelocity().x / 0.6 * multiplier, mc.player.getVelocity().y, mc.player.getVelocity().z / 0.6 * multiplier);
             mc.player.setSprinting(true);

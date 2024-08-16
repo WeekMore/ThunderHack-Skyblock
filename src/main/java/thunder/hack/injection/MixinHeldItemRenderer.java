@@ -4,10 +4,13 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ShieldItem;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
@@ -24,6 +27,7 @@ import thunder.hack.core.Managers;
 import thunder.hack.core.manager.client.ModuleManager;
 import thunder.hack.events.impl.EventHeldItemRenderer;
 import thunder.hack.features.modules.Module;
+import thunder.hack.features.modules.render.Animations;
 
 import static thunder.hack.features.modules.Module.mc;
 
@@ -82,5 +86,36 @@ public abstract class MixinHeldItemRenderer {
             args.set(6, 0.0F);
         }
     }
+
+    @Inject(at = @At("HEAD"), cancellable = true, method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V")
+    public void swordblocking$hideShield(LivingEntity entity, ItemStack stack, ModelTransformationMode renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        if (ModuleManager.animations.isEnabled()){
+            if (Animations.block.getValue()){
+                if ((Animations.alwaysHideShield.getValue() && Animations.hideShield.getValue() && stack.getItem() instanceof ShieldItem) || (Animations.hideShield.getValue() && stack.getItem() instanceof ShieldItem && Animations.canWeaponBlock(entity)))
+                    ci.cancel();
+            }
+        }
+
+    }
+
+    @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", shift = At.Shift.BEFORE, ordinal = 1))
+    public void swordblocking$blockingPosition(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        if (ModuleManager.animations.isEnabled()){
+            if (Animations.block.getValue()){
+                if (!Animations.isWeaponBlocking(player) || item.getItem() instanceof ShieldItem)
+                    return;
+                boolean bl = hand == Hand.MAIN_HAND;
+                Arm arm = bl ? player.getMainArm() : player.getMainArm().getOpposite();
+                int k = arm == Arm.RIGHT ? 1 : -1;
+                matrices.translate(k * -0.14142136F, 0.08F, 0.14142136F);
+                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-102.25F));
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(k * 13.365F));
+                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(k * 78.05F));
+            }
+        }
+
+    }
+
+
 
 }

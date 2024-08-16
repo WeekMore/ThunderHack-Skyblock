@@ -30,6 +30,8 @@ import thunder.hack.setting.Setting;
 import thunder.hack.setting.impl.ColorSetting;
 import thunder.hack.setting.impl.ItemSelectSetting;
 import thunder.hack.utility.Timer;
+import thunder.hack.utility.animation.Animation;
+import thunder.hack.utility.animation.Easing;
 import thunder.hack.utility.math.ExplosionUtility;
 import thunder.hack.utility.player.InteractionUtility;
 import thunder.hack.utility.player.PlayerUtility;
@@ -55,7 +57,10 @@ public class Nuker extends Module {
     private final Setting<Boolean> flatten = new Setting<>("Flatten", false);
     private final Setting<Boolean> creative = new Setting<>("Creative", false);
     private final Setting<Boolean> avoidLava = new Setting<>("AvoidLava", false);
-    private final Setting<Float> range = new Setting<>("Range", 4.2f, 1.5f, 25f);
+    private final Setting<Float> range = new Setting<>("Range", 4.0f, 1.5f, 25f);
+    private final Setting<Boolean> smooth = new Setting<>("SmoothRotate", true);
+    private final Setting<Integer> rotateSpeed = new Setting<>("RotateTime", 200, 0, 5000, v-> smooth.getValue());
+
     private final Setting<ColorMode> colorMode = new Setting<>("ColorMode", ColorMode.Sync);
     public final Setting<ColorSetting> color = new Setting<>("Color", new ColorSetting(0x2250b4b4), v -> colorMode.getValue() == ColorMode.Custom);
 
@@ -66,17 +71,30 @@ public class Nuker extends Module {
     private NukerThread nukerThread = new NukerThread();
     private float rotationYaw, rotationPitch;
 
+    private Animation yawAnimation = new Animation(Easing.LINEAR,rotateSpeed.getValue());
+    private Animation pitchAnimation = new Animation(Easing.LINEAR,rotateSpeed.getValue());
+    private boolean firstOpen = false;
+
+
     @Override
     public void onEnable() {
         nukerThread = new NukerThread();
         nukerThread.setName("ThunderHack-NukerThread");
         nukerThread.setDaemon(true);
         nukerThread.start();
+        yawAnimation = new Animation(Easing.LINEAR,rotateSpeed.getValue());
+        pitchAnimation = new Animation(Easing.LINEAR,rotateSpeed.getValue());
+
+        yawAnimation.setValue(mc.player.headYaw);
+        pitchAnimation.setValue(mc.player.renderPitch);
+
     }
 
     @Override
     public void onDisable() {
         nukerThread.interrupt();
+        firstOpen = false;
+        mc.options.attackKey.setPressed(false);
     }
 
     @Override
@@ -92,6 +110,11 @@ public class Nuker extends Module {
     @EventHandler
     public void onBlockInteract(EventAttackBlock e) {
         if (mc.world.isAir(e.getBlockPos())) return;
+
+        if (mode.is(Mode.Skyblock) && mc.world.getBlockState(e.getBlockPos()).getBlock() == BEDROCK) {
+            blockData = null;
+        }
+
         if (blocks.getValue().equals(BlockSelection.Select) && targetBlockType != mc.world.getBlockState(e.getBlockPos()).getBlock()) {
             targetBlockType = mc.world.getBlockState(e.getBlockPos()).getBlock();
             sendMessage(isRu() ? "Выбран блок: " + Formatting.AQUA + targetBlockType.getName().getString() : "Selected block: " + Formatting.AQUA + targetBlockType.getName().getString());
@@ -122,6 +145,8 @@ public class Nuker extends Module {
 
     @EventHandler
     public void onPlayerUpdate(PlayerUpdateEvent e) {
+        if (mc.player == null) return;
+        if (mc.world == null) return;
         if (blockData != null) {
             if ((mc.world.getBlockState(blockData.bp).getBlock() != targetBlockType && blocks.getValue().equals(BlockSelection.Select))
                     || PlayerUtility.squaredDistanceFromEyes(blockData.bp.toCenterPos()) > range.getPow2Value()
@@ -129,15 +154,43 @@ public class Nuker extends Module {
                 blockData = null;
         }
 
-        if (blockData == null || mc.options.attackKey.isPressed()) return;
+        if (!mode.is(Mode.Skyblock))
+            if (mc.options.attackKey.isPressed()) return;
+
+
+        if (blockData == null) return;
 
         float[] angle = InteractionUtility.calculateAngle(blockData.vec3d);
-        rotationYaw = (angle[0]);
-        rotationPitch = (angle[1]);
-        ModuleManager.rotations.fixRotation = rotationYaw;
+
+
+        if (smooth.getValue()){
+            if (mode.getValue() == Mode.Skyblock) {
+                mc.options.attackKey.setPressed(false);
+            }
+
+            yawAnimation.run(angle[0]);
+            pitchAnimation.run(angle[1]);
+
+            rotationYaw = (float) yawAnimation.getValue();
+            rotationPitch = (float) pitchAnimation.getValue();
+            ModuleManager.rotations.fixRotation = rotationYaw;
+
+            if (!yawAnimation.isFinished()) return;
+            if (!pitchAnimation.isFinished()) return;
+
+
+        }else {
+            rotationYaw = (angle[0]);
+            rotationPitch = (angle[1]);
+            ModuleManager.rotations.fixRotation = rotationYaw;
+        }
 
         if (mode.getValue() == Mode.Default) {
             breakBlock();
+        }
+
+        if (mode.is(Mode.Skyblock)){
+            skyblockBreakBlock();
         }
 
         if (mode.getValue() == Mode.FastAF) {
@@ -182,6 +235,13 @@ public class Nuker extends Module {
                 mc.interactionManager.breakBlock(cache);
         }
     }
+
+    public synchronized void skyblockBreakBlock() {
+        if (blockData == null) return;
+        mc.options.attackKey.setPressed(true);
+
+    }
+
 
     public void onRender3D(MatrixStack stack) {
         BlockPos renderBp = null;
@@ -251,8 +311,12 @@ public class Nuker extends Module {
                         while (Managers.ASYNC.ticking.get()) {
                         }
 
-                        if ((targetBlockType != null || !blocks.getValue().equals(BlockSelection.Select)) && !mc.options.attackKey.isPressed() && blockData == null) {
-                            blockData = getNukerBlockPos();
+                        if ((targetBlockType != null || !blocks.getValue().equals(BlockSelection.Select)) && blockData == null) {
+                            if (mode.is(Mode.Skyblock))
+                                blockData = getNukerBlockPos();
+                            else if (!mc.options.attackKey.isPressed())
+                                blockData = getNukerBlockPos();
+
                         }
                     } else {
                         Thread.yield();
@@ -274,7 +338,7 @@ public class Nuker extends Module {
     }
 
     private enum Mode {
-        Default, Fast, FastAF
+        Default, Fast, FastAF, Skyblock
     }
 
     private enum ColorMode {

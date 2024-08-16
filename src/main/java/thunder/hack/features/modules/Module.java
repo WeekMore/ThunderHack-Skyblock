@@ -377,6 +377,8 @@ public abstract class Module {
         public static final Category PLAYER = new Category("Player");
         public static final Category CLIENT = new Category("Client");
         public static final Category HUD = new Category("HUD");
+        public static final Category SKYBLOCK = new Category("Skyblock");
+
 
         // Initialize predefined categories
         static {
@@ -387,6 +389,7 @@ public abstract class Module {
             CATEGORIES.put("Player", PLAYER);
             CATEGORIES.put("Client", CLIENT);
             CATEGORIES.put("HUD", HUD);
+            CATEGORIES.put("Skyblock", SKYBLOCK);
         }
 
         // Private constructor to control creation
@@ -408,7 +411,7 @@ public abstract class Module {
         }
 
         public static boolean isCustomCategory(Category category) {
-            Set<String> predefinedCategoryNames = Set.of("Combat", "Misc", "Render", "Movement", "Player", "Client", "HUD");
+            Set<String> predefinedCategoryNames = Set.of("Combat", "Misc", "Render", "Movement", "Player", "Client", "HUD", "Skyblock");
 
             return !predefinedCategoryNames.contains(category.getName());
         }

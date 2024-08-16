@@ -21,7 +21,6 @@ public class CommandManager implements IManager {
     private final List<Command> commands = new ArrayList<>();
 
     public CommandManager() {
-        add(new RpcCommand());
         add(new KitCommand());
         add(new GpsCommand());
         add(new CfgCommand());

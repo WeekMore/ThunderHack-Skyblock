@@ -76,8 +76,10 @@ public class Velocity extends Module {
                         }
                     }
                     case Redirect -> {
-                        double vX = Math.abs(pac.getVelocityX());
-                        double vZ = Math.abs(pac.getVelocityZ());
+                        double vX = pac.getVelocityX();
+                        double vZ = pac.getVelocityZ();
+                        if (vX < 0) vX *= -1;
+                        if (vZ < 0) vZ *= -1;
                         double[] motion = MovementUtility.forward((vX + vZ));
                         ((ISPacketEntityVelocity) pac).setMotionX((int) (motion[0]));
                         ((ISPacketEntityVelocity) pac).setMotionY(0);

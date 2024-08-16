@@ -5,6 +5,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import org.lwjgl.glfw.GLFW;
 import thunder.hack.ThunderHack;
 import thunder.hack.core.manager.IManager;
+import thunder.hack.features.modules.skyblock.AutoPickStash;
 import thunder.hack.gui.clickui.ClickGUI;
 import thunder.hack.gui.font.FontRenderers;
 import thunder.hack.features.hud.HudElement;
@@ -262,7 +263,7 @@ public class ModuleManager implements IManager {
     public static Aura aura = new Aura();
     public static FOV fov = new FOV();
     public static ESP esp = new ESP();
-    public static RPC rpc = new RPC();
+    public static AutoPickStash autoPickStash= new AutoPickStash();
 
     public ModuleManager() {
         for (Field field : getClass().getDeclaredFields()) {
@@ -324,7 +325,6 @@ public class ModuleManager implements IManager {
 
         if (ConfigManager.firstLaunch) {
             ModuleManager.notifications.enable();
-            rpc.enable();
             soundFX.enable();
         }
     }
